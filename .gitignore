@@ -126,3 +126,6 @@ generated/*
 contrib/meshlab/autoclone
 # tinyusdz repo, automatically cloned via CMake
 contrib/tinyusdz/autoclone
+
+# Bazel generated files
+bazel-*
