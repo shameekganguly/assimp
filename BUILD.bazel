@@ -9,12 +9,13 @@ DEFINES = [
     # available in BCR.
     "ASSIMP_BUILD_NO_C4D_IMPORTER",
     "ASSIMP_BUILD_NO_OPENGEX_IMPORTER",
-    # "ASSIMP_BUILD_NO_IFC_IMPORTER",  # Test enabling
-    # "ASSIMP_BUILD_NO_B3D_IMPORTER", # Test enabling
-    # "ASSIMP_BUILD_NO_MMD_IMPORTER", # Test enabling
-    # "ASSIMP_BUILD_NO_OGRE_IMPORTER", # Test enabling
-    # "ASSIMP_BUILD_NO_X3D_EXPORTER", # Test enabling
+    "ASSIMP_BUILD_NO_IFC_IMPORTER",  # Test enabling
+    "ASSIMP_BUILD_NO_B3D_IMPORTER",  # Test enabling
+    "ASSIMP_BUILD_NO_MMD_IMPORTER",  # Test enabling
+    "ASSIMP_BUILD_NO_OGRE_IMPORTER",  # Test enabling
+    "ASSIMP_BUILD_NO_X3D_EXPORTER",  # Test enabling
     "ASSIMP_BUILD_NO_USD_IMPORTER",
+    "ASSIMP_BUILD_NO_OFF_IMPORTER",
 
     # Disabled due to vulnerabilities caught by fuzztesting import from
     # memory.
@@ -23,10 +24,42 @@ DEFINES = [
     "ASSIMP_BUILD_NO_M3D_IMPORTER",
     "ASSIMP_BUILD_NO_M3D_EXPORTER",
 
+    # Re-enable
+    "ASSIMP_BUILD_NO_3D_IMPORTER",
+    "ASSIMP_BUILD_NO_NFF_IMPORTER",
+    "ASSIMP_BUILD_NO_Q3BSP_IMPORTER",
+    "ASSIMP_BUILD_NO_FBX_IMPORTER",
+    "ASSIMP_BUILD_NO_FBX_EXPORTER",
+    "ASSIMP_BUILD_NO_MD2_IMPORTER",
+    "ASSIMP_BUILD_NO_MD3_IMPORTER",
+    "ASSIMP_BUILD_NO_MD5_IMPORTER",
+    "ASSIMP_BUILD_NO_SIB_IMPORTER",
+    "ASSIMP_BUILD_NO_XGL_IMPORTER",
+    "ASSIMP_BUILD_NO_IQM_IMPORTER",
+    "ASSIMP_BUILD_NO_NDO_IMPORTER",
+    "ASSIMP_BUILD_NO_SMD_IMPORTER",
+    "ASSIMP_BUILD_NO_3MF_IMPORTER",
+    "ASSIMP_BUILD_NO_3MF_EXPORTER",
+    "ASSIMP_BUILD_NO_LWS_IMPORTER",
+    "ASSIMP_BUILD_NO_LWO_IMPORTER",
+    "ASSIMP_BUILD_NO_Q3D_IMPORTER",
+    "ASSIMP_BUILD_NO_TERRAGEN_IMPORTER",
+    "ASSIMP_BUILD_NO_BLEND_IMPORTER",
+    "ASSIMP_BUILD_NO_COB_IMPORTER",
+    "ASSIMP_BUILD_NO_MDC_IMPORTER",
+    "ASSIMP_BUILD_NO_X_IMPORTER",
+    "ASSIMP_BUILD_NO_X_EXPORTER",
+    "ASSIMP_BUILD_NO_RAW_IMPORTER",
+    "ASSIMP_BUILD_NO_PBRT_IMPORTER",
+    "ASSIMP_BUILD_NO_PBRT_EXPORTER",
+    "ASSIMP_BUILD_NO_X3D_IMPORTER",
+    "ASSIMP_BUILD_NO_ASSJSON_EXPORTER",
+    "ASSIMP_BUILD_NO_MS3D_IMPORTER",
+
     # Don't redefine prefixed names for stb symbols.
     "STB_USE_HUNTER",
 
-    # Use external zlib
+    # Use external zlib from BCR.
     "ASSIMP_BUILD_NO_OWN_ZLIB",
 ]
 
@@ -40,9 +73,6 @@ ALL_HDRS = glob(
         "include/**/*.h",
         "include/**/*.hpp",
         "include/**/*.inl",
-        "contrib/**/*.h",
-        "contrib/**/*.hpp",
-        "contrib/**/*.inl",
     ],
     allow_empty = True,
 )
@@ -121,16 +151,17 @@ cc_library(
     strip_include_prefix = "contrib/openddlparser/include",
 )
 
-cc_library(
-    name = "rapidjson",
-    hdrs = glob(
-        [
-            "contrib/rapidjson/include/**/*.h",
-        ],
-        allow_empty = True,
-    ),
-    strip_include_prefix = "contrib/rapidjson/include",
-)
+# cc_library(
+#     name = "rapidjson",
+#     hdrs = glob(
+#         [
+#             "contrib/rapidjson/include/**/*.h",
+#         ],
+#         allow_empty = True,
+#     ),
+#     defines = ["RAPIDJSON_HAS_STDSTRING"],
+#     strip_include_prefix = "contrib/rapidjson/include",
+# )
 
 cc_library(
     name = "unzip",
@@ -158,6 +189,11 @@ cc_library(
         ],
         allow_empty = True,
     ),
+)
+
+cc_library(
+    name = "earcut-hpp",
+    hdrs = ["contrib/earcut-hpp/earcut.hpp"],
 )
 
 cc_library(
@@ -235,6 +271,8 @@ cc_library(
     name = "exporter",
     srcs = [
         "code/CApi/AssimpCExport.cpp",
+        "code/CApi/CInterfaceIOWrapper.cpp",
+        "code/CApi/CInterfaceIOWrapper.h",
     ],
     deps = [
         ":code_includes",
@@ -252,6 +290,8 @@ cc_library(
     ),
     deps = [
         ":code_includes",
+        ":earcut-hpp",
+        ":geometry",
         ":includes",
     ],
 )
@@ -259,6 +299,16 @@ cc_library(
 cc_library(
     name = "material_system",
     srcs = ["code/Material/MaterialSystem.cpp"],
+    deps = [
+        ":code_includes",
+        ":includes",
+    ],
+)
+
+cc_library(
+    name = "geometry",
+    srcs = ["code/Geometry/GeometryUtils.cpp"],
+    hdrs = ["code/Geometry/GeometryUtils.h"],
     deps = [
         ":code_includes",
         ":includes",
@@ -304,18 +354,18 @@ cc_library(
         ":utf8",
         # Importers
         ":amf_importer",
-        # ":3ds_importer",
-        # ":ac_importer",
-        # ":ase_importer",
-        # ":assbin_importer",
-        # ":assxml_importer",
-        # ":b3d_importer",
-        # ":bvh_importer",
-        # ":collada_importer",
-        # ":dxf_importer",
-        # ":csm_importer",
+        ":3ds_importer",
+        ":ac_importer",
+        ":ase_importer",
+        ":assbin_importer",
+        ":assxml_importer",
+        ":b3d_importer",
+        ":bvh_importer",
+        ":collada_importer",
+        ":dxf_importer",
+        ":csm_importer",
         # ":hmp_importer",
-        # ":irr_importer",
+        ":irr_importer",
         # ":lwo_importer",
         # ":lws_importer",
         # ":md2_importer",
@@ -329,7 +379,7 @@ cc_library(
         ":obj_importer",
         # ":ogre_importer",
         # ":opengex_importer",
-        # ":ply_importer",
+        ":ply_importer",
         # ":ms3d_importer",
         # ":cob_importer",
         # ":blend_importer",
@@ -341,12 +391,12 @@ cc_library(
         # ":raw_importer",
         # ":sib_importer",
         # ":smd_importer",
-        # ":stl_importer",
+        ":stl_importer",
         # ":terragen_importer",
         # ":3d_importer",
         # ":x_importer",
         # ":x3d_importer",
-        ":gltf2_importer",
+        ":gltf_importer",
         # ":3mf_importer",
         # ":mmd_importer",
     ],
@@ -367,6 +417,7 @@ cc_library(
     deps = [
         ":code_includes",
         ":includes",
+        "@pugixml",
     ],
     alwayslink = True,
 )
@@ -535,21 +586,22 @@ cc_library(
     alwayslink = True,
 )
 
-cc_library(
-    name = "hmp_importer",
-    srcs = glob(
-        [
-            "code/AssetLib/HMP/*.h",
-            "code/AssetLib/HMP/*.cpp",
-        ],
-    ),
-    hdrs = ALL_HDRS,
-    deps = [
-        ":code_includes",
-        ":includes",
-    ],
-    alwayslink = True,
-)
+# TODO: needs symbols from MD2 importer
+# cc_library(
+#     name = "hmp_importer",
+#     srcs = glob(
+#         [
+#             "code/AssetLib/HMP/*.h",
+#             "code/AssetLib/HMP/*.cpp",
+#         ],
+#     ),
+#     hdrs = ALL_HDRS,
+#     deps = [
+#         ":code_includes",
+#         ":includes",
+#     ],
+#     alwayslink = True,
+# )
 
 cc_library(
     name = "irr_importer",
@@ -785,23 +837,21 @@ cc_library(
 #     alwayslink = True,
 # )
 
-# cc_library(
-#     name = "ply_importer",
-#     srcs = [
-#         "code/PlyExporter.cpp",
-#         "code/PlyExporter.h",
-#         "code/PlyLoader.cpp",
-#         "code/PlyLoader.h",
-#         "code/PlyParser.cpp",
-#         "code/PlyParser.h",
-#     ],
-#     hdrs = ALL_HDRS,
-#     deps = [
-#         ":code_includes",
-#         ":includes",
-#     ],
-#     alwayslink = True,
-# )
+cc_library(
+    name = "ply_importer",
+    srcs = glob(
+        [
+            "code/AssetLib/Ply/*.h",
+            "code/AssetLib/Ply/*.cpp",
+        ],
+    ),
+    hdrs = ALL_HDRS,
+    deps = [
+        ":code_includes",
+        ":includes",
+    ],
+    alwayslink = True,
+)
 
 # cc_library(
 #     name = "ms3d_importer",
@@ -1018,21 +1068,21 @@ cc_library(
 #     alwayslink = True,
 # )
 
-# cc_library(
-#     name = "stl_importer",
-#     srcs = [
-#         "code/STLExporter.cpp",
-#         "code/STLExporter.h",
-#         "code/STLLoader.cpp",
-#         "code/STLLoader.h",
-#     ],
-#     hdrs = ALL_HDRS,
-#     deps = [
-#         ":code_includes",
-#         ":includes",
-#     ],
-#     alwayslink = True,
-# )
+cc_library(
+    name = "stl_importer",
+    srcs = glob(
+        [
+            "code/AssetLib/STL/*.h",
+            "code/AssetLib/STL/*.cpp",
+        ],
+    ),
+    hdrs = ALL_HDRS,
+    deps = [
+        ":code_includes",
+        ":includes",
+    ],
+    alwayslink = True,
+)
 
 # cc_library(
 #     name = "terragen_importer",
@@ -1117,36 +1167,25 @@ cc_library(
     name = "gltf_importer",
     srcs = glob(
         [
+            "code/AssetLib/glTFCommon/*.h",
+            "code/AssetLib/glTFCommon/*.cpp",
             "code/AssetLib/glTF/*.h",
             "code/AssetLib/glTF/*.inl",
             "code/AssetLib/glTF/*.cpp",
+            "code/AssetLib/glTF2/*.h",
+            "code/AssetLib/glTF2/*.inl",
+            "code/AssetLib/glTF2/*.cpp",
         ],
     ),
     hdrs = ALL_HDRS,
+    defines = ["RAPIDJSON_HAS_STDSTRING"],
     deps = [
         ":code_includes",
         ":includes",
-        ":rapidjson",
+        "@rapidjson",
     ],
     alwayslink = True,
 )
-
-# cc_library(
-#     name = "gltf2_importer",
-#     srcs = glob(
-#         [
-#             "code/AssetLib/glTF2/*.h",
-#             "code/AssetLib/glTF2/*.cpp",
-#         ],
-#     ),
-#     hdrs = ALL_HDRS,
-#     deps = [
-#         ":code_includes",
-#         ":includes",
-#         ":rapidjson",
-#     ],
-#     alwayslink = True,
-# )
 
 # cc_library(
 #     name = "3mf_importer",
